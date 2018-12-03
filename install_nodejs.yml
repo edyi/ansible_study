@@ -1,0 +1,19 @@
+---
+- hosts: s2
+  become: yes
+  vars:
+    shfile1: install_nodejs.sh
+  tasks:
+    - name: install gcc/make
+      yum: name={{item}} state=latest
+      with_items:
+        - which
+        - gcc-c++
+        - make
+    - name: run shfile (download and setup nodejs 8.x)
+      script: ./script/{{ shfile1 }}
+      register: result
+    - debug:
+        var: result
+    - name: install nodejs
+      yum: name=nodejs state=latest

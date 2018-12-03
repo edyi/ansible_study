@@ -1,0 +1,33 @@
+---
+- hosts: s1
+  sudo: yes
+  tasks:
+    - name: run script
+      script: ./script/test.sh hoge moge piyo
+      register: result
+    - debug:
+        var: result.stdout_lines
+
+    - name: date
+      command: date
+      register: result
+    - debug:
+        var: result.stdout
+
+    - name: hostname
+      command: hostname
+      register: result
+    - debug:
+        var: result.stdout
+
+    - name: Memory
+      command: free -m
+      register: result
+    - debug:
+        var: result.stdout_lines
+
+    - name: Directory
+      command: pwd
+      register: result
+    - debug:
+        var: result.stdout

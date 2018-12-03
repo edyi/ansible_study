@@ -1,0 +1,66 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+  vars:
+    version: 2.9.5
+    prefix_dir: /usr/local
+    src_dir: "{{ prefix_dir }}/src"
+    bin_dir: "{{ prefix_dir }}/bin"
+  tasks:
+    - name: original git exist check
+      stat: path={{ bin_dir }}/git
+      register: exist_git
+
+    - debug: msg="git not installed."
+      when: exist_git.stat.exists == false
+
+    - name: original git version check
+      command: "{{ bin_dir }}/git --version warn=false"
+      register: org_version
+      changed_when: false
+      when: exist_git.stat.exists == true
+
+    - name: install dependences
+      yum: name={{ item }}
+      with_items:
+        - curl-devel
+        - expat-devel
+        - gettext-devel
+        - openssl-devel
+        - zlib-devel
+        - gcc
+        - perl-ExtUtils-MakeMaker
+      when: (exist_git.stat.exists == false) or
+            (exist_git.stat.exists == true and org_version.stdout != "git version {{ version }}")
+
+    - name: make download dir
+      file: path={{ src_dir }} state=directory owner=root group=root mode=755
+      when: (exist_git.stat.exists == false) or
+            (exist_git.stat.exists == true and org_version.stdout != "git version {{ version }}")
+
+    - name: download git version {{ version }}
+      unarchive:
+        src: https://www.kernel.org/pub/software/scm/git/git-{{ version }}.tar.gz
+        dest: "{{ src_dir }}"
+        copy: no
+      when: (exist_git.stat.exists == false) or
+            (exist_git.stat.exists == true and org_version.stdout != "git version {{ version }}")
+
+    - name: make all
+      make:
+        chdir: "{{ src_dir }}/git-{{ version }}"
+        target: all
+        params:
+          prefix: "{{ prefix_dir }}"
+      when: (exist_git.stat.exists == false) or
+            (exist_git.stat.exists == true and org_version.stdout != "git version {{ version }}")
+
+    - name: make install
+      make:
+        chdir: "{{ src_dir }}/git-{{ version }}"
+        target: install
+        params:
+          prefix: "{{ prefix_dir }}"
+      when: (exist_git.stat.exists == false) or
+            (exist_git.stat.exists == true and org_version.stdout != "git version {{ version }}")

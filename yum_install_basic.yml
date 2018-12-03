@@ -1,0 +1,15 @@
+---
+- hosts: all
+  become: yes
+  vars:
+  tasks:
+    - name: install packages
+      yum: name={{item}} state=latest
+      with_items:
+        - which
+        - jwhois
+        - wget
+        - sudo
+        - openssh-server
+        - net-tools
+        - iproute
